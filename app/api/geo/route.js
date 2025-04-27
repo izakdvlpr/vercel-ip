@@ -2,24 +2,19 @@ import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
+  const ip = await getIp()
+  const geoData = await getGeoData(ip)
+  
+  return NextResponse.json(geoData)
+}
+
+async function getIp() {
   const allHeaders = await headers();
   
   const forwardedFor = allHeaders?.get('x-forwarded-for')?.split(', ')?.[0]?.trim()
   const realIp = allHeaders?.get('x-real-ip')?.trim()
   
-  if (forwardedFor) {
-    const geoData = await getGeoData(realIp)
-    
-    return NextResponse.json({ ip: forwardedFor, type: 'forwardedFor', geoData })
-  }
-  
-  if (realIp) { 
-    const geoData = await getGeoData(realIp)
-    
-    return NextResponse.json({ ip: realIp, type: 'realIp', geoData })
-  }
-  
-  return NextResponse.json({ message: 'No IP found' })
+  return forwardedFor ?? realIp ?? null
 }
 
 async function getGeoData(ip) {
